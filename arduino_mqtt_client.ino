@@ -1,3 +1,5 @@
+/* ARTIK MQTT+Raspberry Pi Apache Kafka Cluster Bridge [P014] : http://rdiot.tistory.com/336 [RDIoT Demo] */
+
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
