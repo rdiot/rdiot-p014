@@ -1,3 +1,5 @@
+/* ARTIK MQTT+Raspberry Pi Apache Kafka Cluster Bridge [P014] : http://rdiot.tistory.com/336 [RDIoT Demo] */
+
 package com.rdiot.mqtt_kafka_bridge;
 
 import java.util.ArrayList;
