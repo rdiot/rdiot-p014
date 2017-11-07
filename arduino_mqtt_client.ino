@@ -109,7 +109,7 @@ void loop()
   msg = dtostrf(dht.humidity, 5, 2, message_buffer); //습도
   client.publish("humidity", msg);
 
-  msg = dtostrf(cds, 4, 0, message_buffer); //조도
+  msg = dtostrf(cds, 3, 0, message_buffer); //조도
   client.publish("cds", msg); 
 
   msg = dtostrf(airGrade, 1, 0, message_buffer); //공기질수준
