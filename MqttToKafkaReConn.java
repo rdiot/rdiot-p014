@@ -5,13 +5,13 @@ package com.rdiot.mqtt_kafka_bridge;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import org.fusesource.mqtt.client.*;
 
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
+
 
 
 public class MqttToKafkaReConn {
@@ -23,14 +23,17 @@ public class MqttToKafkaReConn {
 	
 	//Kafka Producer 
 	private static final String KAFKA_BROKER_LIST = "kafka-pi-01:9092,kafka-pi-02:9092,kafka-pi-03:9092";
-	private static final int KAFKA_RECONN_CNT = 1000;	//279620
+	private static final int KAFKA_RECONN_CNT = 1000;	 	
+	private static final int MQTT_RECONN_CNT = 1000;  // must be under 279621
+	static byte[] qoses;
+
 	
 	public static void main(String[] args) throws Exception {
 		
 		MQTT mqtt = new MQTT();		
 		mqtt.setHost(MQTT_SERVER_HOST, MQTT_SERVER_PORT);
-		BlockingConnection bconn = mqtt.blockingConnection();		
-		bconn.connect();		
+		BlockingConnection bconn = null;		
+				
 		
 		List<Topic> topicList = new ArrayList<Topic>();
 		String[] topic = MQTT_SERVER_TOPICS.split(",");
@@ -42,12 +45,12 @@ public class MqttToKafkaReConn {
 		}
 
 		Topic[] subscribeTopics = topicList.toArray(new Topic[]{});
-		byte[] qoses = bconn.subscribe(subscribeTopics);
 				
 		
 		Properties props = new Properties();
 		props.put("metadata.broker.list", KAFKA_BROKER_LIST);
-		props.put("serializer.class", "kafka.serializer.StringEncoder");
+		props.put("serializer.class", "kafka.serializer.StringEncoder");		
+		props.put("block.on.buffer.full", "false");
 
 		ProducerConfig kafkaProducerConfig = new ProducerConfig(props);
 		
@@ -55,7 +58,19 @@ public class MqttToKafkaReConn {
 		int num = 0;
 		Producer<String, String> kafkaProducer = null;
 		
+		boolean mqttReconn = true;
+		
+		
 		while(true) {
+			
+			if(mqttReconn) {
+				bconn = mqtt.blockingConnection();
+				bconn.connect();
+				qoses = bconn.subscribe(subscribeTopics);
+				mqttReconn = false;	
+				System.out.println("mqtt connected");
+				
+			}
 			
 			if(kafkaReconn) {
 				kafkaProducer = new Producer<String, String>(kafkaProducerConfig);
@@ -82,17 +97,23 @@ public class MqttToKafkaReConn {
 			KeyedMessage<String, String> kafkaMsg = new KeyedMessage<String, String>(topicName, strRtn);
 			kafkaProducer.send(kafkaMsg);
 			
+						
 			if(num%topicCount  == 0) {
 				System.out.println();
-				TimeUnit.SECONDS.sleep(1);
 			}
 			
-			if(num % KAFKA_RECONN_CNT == 0) {
+			// mqtt reconnect 
+			if(num % MQTT_RECONN_CNT == 0) {				
+				bconn.disconnect();
+				mqttReconn = true;				
+			}
+			
+			// kafka recoonect
+			if(num % KAFKA_RECONN_CNT == 0) {				
 				kafkaProducer.close();
 				kafkaReconn = true;				
 			}
-			
-			
+						
 		}
 		
 	}
